@@ -1,6 +1,15 @@
 from display import *
 from matrix import *
 
+def normalize(v):
+    magv = magnitude(v)
+    return [v[0]/magv, v[1]/magv, v[2]/magv]
+
+def magnitude(v):
+    return math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
+
+def dot(a, b):
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
 
 def add_polygon( polygons, x0, y0, z0, x1, y1, z1, x2, y2, z2 ):
     add_point(polygons, x0, y0, z0)
