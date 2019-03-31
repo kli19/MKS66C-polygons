@@ -8,56 +8,52 @@ The file follows the following format:
      Every command is a single character that takes up a line
      Any command that requires arguments must have those arguments in the second line.
      The commands are as follows:
-
-         sphere: add a sphere to the POLYGON matrix -
-                 takes 4 arguemnts (cx, cy, cz, r)
-         torus: add a torus to the POLYGON matrix - 
-                takes 5 arguemnts (cx, cy, cz, r1, r2)
-         box: add a rectangular prism to the POLYGON matrix - 
-              takes 6 arguemnts (x, y, z, width, height, depth)	    
-         clear: clears the edge and POLYGON matrices
-
-	 circle: add a circle to the edge matrix - 
-	         takes 4 arguments (cx, cy, cz, r)
+         sphere: add a sphere to the edge matrix -
+	    takes 4 arguemnts (cx, cy, cz, r)
+         torus: add a torus to the edge matrix -
+	    takes 5 arguemnts (cx, cy, cz, r1, r2)
+         box: add a rectangular prism to the edge matrix -
+	    takes 6 arguemnts (x, y, z, width, height, depth)
+	 circle: add a circle to the edge matrix -
+	    takes 3 arguments (cx, cy, r)
 	 hermite: add a hermite curve to the edge matrix -
-	          takes 8 arguments (x0, y0, x1, y1, rx0, ry0, rx1, ry1)
+	    takes 8 arguments (x0, y0, x1, y1, rx0, ry0, rx1, ry1)
 	 bezier: add a bezier curve to the edge matrix -
-	         takes 8 arguments (x0, y0, x1, y1, x2, y2, x3, y3)
+	    takes 8 arguments (x0, y0, x1, y1, x2, y2, x3, y3)
          line: add a line to the edge matrix -
-               takes 6 arguemnts (x0, y0, z0, x1, y1, z1)
-         ident: set the transform matrix to the identity matrix -
-         scale: create a scale matrix,
-                then multiply the transform matrix by the scale matrix -
-                takes 3 arguments (sx, sy, sz)
-         move: create a translation matrix,
-               then multiply the transform matrix by the translation matrix -
-               takes 3 arguments (tx, ty, tz)
-         rotate: create a rotation matrix,
-                 then multiply the transform matrix by the rotation matrix -
-                 takes 2 arguments (axis, theta) axis should be x y or z
-         apply: apply the current transformation matrix to the edge and POLYGON matrices
-         display: clear the screen, then
-                  draw the lines of the edge and POLYGON matrices to the screen
-                  display the screen
-         save: clear the screen, then
-               draw the lines of the edge and POLYGON matrices to the screen
-               save the screen to a file -
-               takes 1 argument (file name)
-         quit: end parsing
-
+	    takes 6 arguemnts (x0, y0, z0, x1, y1, z1)
+	 ident: set the transform matrix to the identity matrix -
+	 scale: create a scale matrix,
+	    then multiply the transform matrix by the scale matrix -
+	    takes 3 arguments (sx, sy, sz)
+	 move: create a translation matrix,
+	    then multiply the transform matrix by the translation matrix -
+	    takes 3 arguments (tx, ty, tz)
+	 rotate: create a rotation matrix,
+	    then multiply the transform matrix by the rotation matrix -
+	    takes 2 arguments (axis, theta) axis should be x, y or z
+         clear: clear the edge matrix of points
+	 apply: apply the current transformation matrix to the
+	    edge matrix
+	 display: draw the lines of the edge matrix to the screen
+	    display the screen
+	 save: draw the lines of the edge matrix to the screen
+	    save the screen to a file -
+	    takes 1 argument (file name)
+	 quit: end parsing
 See the file script for an example of the file format
 """
-ARG_COMMANDS = [ 'box', 'sphere', 'torus', 'circle', 'bezier', 'hermite', 'line', 'scale', 'move', 'rotate', 'save' ]
+ARG_COMMANDS = [ 'line', 'scale', 'move', 'rotate', 'save', 'circle', 'bezier', 'hermite', 'box', 'sphere', 'torus' ]
 
-def parse_file( fname, edges, polygons, transform, screen, color ):
+def parse_file( fname, edges, polygon, transform, screen, color ):
 
     f = open(fname)
     lines = f.readlines()
 
     step = 100
     step_3d = 20
-
     c = 0
+
     while c < len(lines):
         line = lines[c].strip()
         #print ':' + line + ':'
@@ -65,22 +61,23 @@ def parse_file( fname, edges, polygons, transform, screen, color ):
         if line in ARG_COMMANDS:
             c+= 1
             args = lines[c].strip().split(' ')
+            #print 'args\t' + str(args)
 
         if line == 'sphere':
             #print 'SPHERE\t' + str(args)
-            add_sphere(edges,
+            add_sphere(polygon,
                        float(args[0]), float(args[1]), float(args[2]),
                        float(args[3]), step_3d)
 
         elif line == 'torus':
             #print 'TORUS\t' + str(args)
-            add_torus(edges,
+            add_torus(polygon,
                       float(args[0]), float(args[1]), float(args[2]),
                       float(args[3]), float(args[4]), step_3d)
 
         elif line == 'box':
             #print 'BOX\t' + str(args)
-            add_box(edges,
+            add_box(polygon,
                     float(args[0]), float(args[1]), float(args[2]),
                     float(args[3]), float(args[4]), float(args[5]))
 
@@ -128,22 +125,27 @@ def parse_file( fname, edges, polygons, transform, screen, color ):
                 t = make_rotZ(theta)
             matrix_mult(t, transform)
 
+        elif line == 'clear':
+            edges = []
+            polygon = []
+
         elif line == 'ident':
             ident(transform)
 
         elif line == 'apply':
             matrix_mult( transform, edges )
+            matrix_mult( transform, polygon )
 
-        elif line == 'clear':
-            edges = []
-            
         elif line == 'display' or line == 'save':
             clear_screen(screen)
-            draw_lines(edges, screen, color)
+            if len(edges) > 1:
+                draw_lines(edges, screen, color)
+            if len(polygon) > 2:
+                draw_polygons(polygon, screen, color)
 
             if line == 'display':
                 display(screen)
             else:
                 save_extension(screen, args[0])
-            
+
         c+= 1
